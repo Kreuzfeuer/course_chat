@@ -1,16 +1,17 @@
 // src/App.js
 import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Chat from './Chat';
-import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
-
-const theme = createTheme();
+import ChatRoomPage from './ChatRoomPage';
 
 const App = () => {
     return (
-        <ThemeProvider theme={theme}>
-            <CssBaseline />
-            <Chat />
-        </ThemeProvider>
+        <Router>
+            <Routes>
+                <Route path="/" element={<Chat />} />
+                <Route path="/chat/:chatRoomName" element={<ChatRoomPage />} />
+            </Routes>
+        </Router>
     );
 };
 

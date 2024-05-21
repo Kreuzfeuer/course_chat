@@ -7,9 +7,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import lombok.ToString;
+
 import java.util.Objects;
 
 @Entity
+@ToString
 public class ChatMessage {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
