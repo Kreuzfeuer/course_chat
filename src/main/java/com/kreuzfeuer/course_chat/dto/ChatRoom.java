@@ -11,9 +11,9 @@ public class ChatRoom {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+
     private String name;
 
-    // Constructors, getters, and setters
     public ChatRoom() {}
 
     public ChatRoom(String name) {
@@ -47,5 +47,13 @@ public class ChatRoom {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "ChatRoom{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                '}';
     }
 }

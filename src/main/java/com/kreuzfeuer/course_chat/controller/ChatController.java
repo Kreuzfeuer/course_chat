@@ -6,8 +6,9 @@ import com.kreuzfeuer.course_chat.repository.ChatMessageRepository;
 import com.kreuzfeuer.course_chat.repository.ChatRoomRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.messaging.simp.annotation.SendToUser;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import java.util.List;
@@ -22,35 +23,37 @@ public class ChatController {
     @Autowired
     private ChatMessageRepository chatMessageRepository;
 
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
     @MessageMapping("/sendMessage")
-    @SendTo("/topic/messages")
-    public ChatMessage sendMessage(ChatMessage message, String chatRoomName) {
+    public void sendMessage(@Payload ChatMessage message, String chatRoomName) {
         ChatRoom chatRoom = chatRoomRepository.findByName(chatRoomName);
         message.setChatRoom(chatRoom);
         chatMessageRepository.save(message);
-        return message;
+        messagingTemplate.convertAndSend("/topic/messages", message);
     }
 
     @MessageMapping("/createChat")
-    @SendTo("/topic/chatRooms")
-    public List<String> createChat(String chatRoomName) {
+    public void createChat(@Payload String chatRoomName) {
         if (chatRoomRepository.findByName(chatRoomName) == null) {
             ChatRoom chatRoom = new ChatRoom(chatRoomName);
             chatRoomRepository.save(chatRoom);
         }
-        return getChatRoomNames();
+        List<String> chatRooms = getChatRoomNames();
+        messagingTemplate.convertAndSend("/topic/chatRooms", chatRooms);
     }
 
     @MessageMapping("/getChatHistory")
-    @SendToUser("/queue/chatHistory")
-    public List<ChatMessage> getChatHistory(String chatRoomName) {
-        return chatMessageRepository.findByChatRoomNameOrderByIdAsc(chatRoomName);
+    public void getChatHistory(@Payload String chatRoomName) {
+        List<ChatMessage> chatHistory = chatMessageRepository.findByChatRoomNameOrderByIdAsc(chatRoomName);
+        messagingTemplate.convertAndSendToUser(chatRoomName, "/topic/chatHistory", chatHistory);
     }
 
     @MessageMapping("/getChatRooms")
-    @SendToUser("/queue/chatRooms")
-    public List<String> getChatRooms() {
-        return getChatRoomNames();
+    public void getChatRooms() {
+        List<String> chatRooms = getChatRoomNames();
+        messagingTemplate.convertAndSend("/topic/chatRooms", chatRooms);
     }
 
     private List<String> getChatRoomNames() {
@@ -59,3 +62,6 @@ public class ChatController {
                 .collect(Collectors.toList());
     }
 }
+
+
+

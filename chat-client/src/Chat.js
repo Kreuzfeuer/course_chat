@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { Box, Button, Container, TextField, Typography, List, ListItem, ListItemText, Divider, Select, MenuItem } from '@mui/material';
+import {
+    Box, Button, Container, TextField, Typography, List, ListItem, ListItemText,
+    Divider, Select, MenuItem, Grid, Paper
+} from '@mui/material';
 
 const Chat = () => {
     const [messages, setMessages] = useState([]);
@@ -19,18 +22,26 @@ const Chat = () => {
             webSocketFactory: () => socket,
             onConnect: () => {
                 setIsConnected(true);
+
+                // Подписка на получение сообщений
                 stompClient.subscribe('/topic/messages', (message) => {
                     const receivedMessage = JSON.parse(message.body);
                     setMessages((prevMessages) => [...prevMessages, receivedMessage]);
                 });
+
+                // Подписка на получение списка чатов
                 stompClient.subscribe('/topic/chatRooms', (message) => {
                     const rooms = JSON.parse(message.body);
                     setChatRooms(rooms);
                 });
-                stompClient.subscribe('/user/topic/chatHistory', (message) => {
+
+                // Подписка на получение истории чата
+                stompClient.subscribe(`/user/topic/chatHistory`, (message) => {
                     const history = JSON.parse(message.body);
                     setMessages(history);
                 });
+
+                // Запрос списка чатов после подключения
                 stompClient.publish({
                     destination: '/app/getChatRooms',
                 });
@@ -50,7 +61,7 @@ const Chat = () => {
     }, []);
 
     const sendMessage = () => {
-        if (client && message.trim() !== '' && nickname.trim() !== '' && selectedChatRoom !== '') {
+        if (client && isConnected && message.trim() !== '' && nickname.trim() !== '' && selectedChatRoom !== '') {
             client.publish({
                 destination: '/app/sendMessage',
                 body: JSON.stringify({ from: 'User', text: message, nickname: nickname }),
@@ -74,7 +85,7 @@ const Chat = () => {
     };
 
     const handleCreateChatRoom = (chatRoomName) => {
-        if (chatRoomName.trim() !== '' && client) {
+        if (chatRoomName.trim() !== '' && client && isConnected) {
             client.publish({
                 destination: '/app/createChat',
                 body: chatRoomName,
@@ -84,7 +95,7 @@ const Chat = () => {
 
     const handleSelectChatRoom = (chatRoomName) => {
         setSelectedChatRoom(chatRoomName);
-        if (client) {
+        if (client && isConnected) {
             client.publish({
                 destination: '/app/getChatHistory',
                 body: chatRoomName,
@@ -93,78 +104,72 @@ const Chat = () => {
     };
 
     return (
-        <Container maxWidth="sm">
-            {!isConnected && <Typography variant="h6">Connecting...</Typography>}
-            {isConnected && (
-                <Box my={4}>
-                    <Typography variant="h4" gutterBottom>Chat</Typography>
+        <Container maxWidth="md">
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Box>
+                    <TextField
+                        label="Enter your nickname"
+                        variant="outlined"
+                        value={nickname}
+                        onChange={(e) => setNickname(e.target.value)}
+                        margin="normal"
+                    />
+                    <Button variant="contained" color="primary" onClick={handleSetNickname} disabled={isNicknameSet}>
+                        Set Nickname
+                    </Button>
+                </Box>
+                <Box>
+                    <Button variant="contained" color="secondary" onClick={handleResetNickname} disabled={!isNicknameSet}>
+                        Change Nickname
+                    </Button>
+                    <TextField
+                        id="create-new-room"
+                        label="Create new chat room"
+                        variant="outlined"
+                    />
+                    <Button variant="contained" color="primary" onClick={() => handleCreateChatRoom(document.getElementById('create-new-room').value)}>
+                        Create Chat Room
+                    </Button>
+                </Box>
+            </Box>
+            <Grid container spacing={2}>
+                <Grid item xs={4}>
                     <Box mb={2}>
-                        <TextField
-                            label="Create new chat room"
-                            variant="outlined"
-                            fullWidth
-                            onKeyPress={(e) => {
-                                if (e.key === 'Enter') {
-                                    handleCreateChatRoom(e.target.value);
-                                    e.target.value = '';
-                                }
-                            }}
-                        />
-                    </Box>
-                    <Box mb={2}>
+                        <Typography variant="h6">Chat Rooms</Typography>
                         <Select
                             value={selectedChatRoom}
                             onChange={(e) => handleSelectChatRoom(e.target.value)}
-                            displayEmpty
                             fullWidth
                         >
-                            <MenuItem value="" disabled>Select Chat Room</MenuItem>
+                            <MenuItem value="">Select Chat Room</MenuItem>
                             {chatRooms.map((room, index) => (
                                 <MenuItem key={index} value={room}>{room}</MenuItem>
                             ))}
                         </Select>
                     </Box>
-                    <List>
-                        {messages.map((msg, index) => (
-                            <ListItem key={index} alignItems="flex-start">
-                                <ListItemText
-                                    primary={msg.nickname}
-                                    secondary={msg.text}
-                                />
-                                <Divider component="li" />
-                            </ListItem>
-                        ))}
-                    </List>
-                </Box>
-            )}
-            <Box my={4}>
-                {!isNicknameSet ? (
-                    <Box display="flex" flexDirection="column" alignItems="center">
+                </Grid>
+                <Grid item xs={8}>
+                    <Paper elevation={3} style={{ height: '400px', overflowY: 'auto' }}>
+                        <List>
+                            {messages.map((msg, index) => (
+                                <ListItem key={index} alignItems="flex-start">
+                                    <ListItemText
+                                        primary={msg.nickname}
+                                        secondary={msg.text}
+                                    />
+                                    <Divider component="li" />
+                                </ListItem>
+                            ))}
+                        </List>
+                    </Paper>
+                    <Box mt={2}>
                         <TextField
-                            label="Enter your nickname"
-                            variant="outlined"
-                            value={nickname}
-                            onChange={(e) => setNickname(e.target.value)}
-                            margin="normal"
-                        />
-                        <Button variant="contained" color="primary" onClick={handleSetNickname}>
-                            Set Nickname
-                        </Button>
-                    </Box>
-                ) : (
-                    <Box>
-                        <Typography variant="h6">Nickname: {nickname}</Typography>
-                        <Button variant="contained" color="secondary" onClick={handleResetNickname} sx={{ mb: 2 }}>
-                            Change Nickname
-                        </Button>
-                        <TextField
-                            fullWidth
                             label="Enter your message"
                             variant="outlined"
+                            fullWidth
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
-                            margin="normal"
-                            disabled={selectedChatRoom === ''}
+                            disabled={!isConnected || selectedChatRoom === ''}
                         />
                         <Button
                             fullWidth
@@ -176,8 +181,8 @@ const Chat = () => {
                             Send
                         </Button>
                     </Box>
-                )}
-            </Box>
+                </Grid>
+            </Grid>
         </Container>
     );
 };
