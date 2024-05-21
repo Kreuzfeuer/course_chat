@@ -1,4 +1,4 @@
-package com.kreuzfeuer.course_chat.dto;
+package com.kreuzfeuer.course_chat.model;
 
 
 

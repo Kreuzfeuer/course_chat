@@ -1,7 +1,7 @@
 package com.kreuzfeuer.course_chat.controller;
 
-import com.kreuzfeuer.course_chat.dto.ChatMessage;
-import com.kreuzfeuer.course_chat.dto.ChatRoom;
+import com.kreuzfeuer.course_chat.model.ChatMessage;
+import com.kreuzfeuer.course_chat.model.ChatRoom;
 import com.kreuzfeuer.course_chat.repository.ChatMessageRepository;
 import com.kreuzfeuer.course_chat.repository.ChatRoomRepository;
 import lombok.extern.slf4j.Slf4j;

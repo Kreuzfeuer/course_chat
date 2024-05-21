@@ -22,20 +22,20 @@ const ChatRoomPage = () => {
             onConnect: () => {
                 setIsConnected(true);
 
-                // Подписка на получение сообщений
+                // получение сообщений
                 stompClient.subscribe(`/topic/messages/${chatRoomName}`, (message) => {
                     const receivedMessage = JSON.parse(message.body);
                     setMessages((prevMessages) => [...prevMessages, receivedMessage]);
                 });
 
-                // Подписка на получение истории чата
+                // получение истории
                 stompClient.subscribe(`/topic/chatHistory/${chatRoomName}`, (message) => {
                     const history = JSON.parse(message.body);
                     console.log(message.body)
                     setMessages(history);
                 });
 
-                // Запрос истории чата после подключения
+                // Запрос истории после подключения
                 stompClient.publish({
                     destination: '/app/getChatHistory',
                     body: chatRoomName,
