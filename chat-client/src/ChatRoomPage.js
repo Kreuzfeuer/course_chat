@@ -1,10 +1,10 @@
 // src/ChatRoomPage.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { Box, Button, TextField, Typography, List, ListItem, ListItemText, Divider, Paper } from '@mui/material';
-
+import { Box, Button, TextField, Typography, TabScrollButton,  List, ListItem, ListItemText, Divider, Paper, AppBar, Toolbar, IconButton } from '@mui/material';
+import { Chat as ChatIcon, Home as HomeIcon } from '@mui/icons-material';
 const ChatRoomPage = () => {
     const { chatRoomName } = useParams();
     const navigate = useNavigate();
@@ -13,6 +13,7 @@ const ChatRoomPage = () => {
     const [nickname, setNickname] = useState(localStorage.getItem('nickname') || '');
     const [client, setClient] = useState(null);
     const [isConnected, setIsConnected] = useState(false);
+    const messagesEndRef = useRef(null);
 
     useEffect(() => {
         const socket = new SockJS('http://localhost:8080/ws');
@@ -53,6 +54,10 @@ const ChatRoomPage = () => {
             }
         };
     }, [chatRoomName]);
+    
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
 
     const sendMessage = () => {
         if (client && isConnected && message.trim() !== '' && nickname.trim() !== '') {
@@ -67,10 +72,21 @@ const ChatRoomPage = () => {
 
     return (
         <Box>
-            <Button onClick={() => navigate('/')}>Back to Room Selection</Button>
-            <Typography variant="h4">Chat Room: {chatRoomName}</Typography>
+             <AppBar position="static" style={{ marginBottom: '20px' }}>
+                <Toolbar>
+                    <IconButton edge="start" color="inherit" aria-label="home" onClick={() => navigate('/')}>
+                        <HomeIcon />
+                    </IconButton>
+                    <Typography variant="h6" style={{ flexGrow: 1 }}>
+                        Chat Room: {chatRoomName}
+                    </Typography>
+                    <IconButton color="inherit">
+                        <ChatIcon />
+                    </IconButton>
+                </Toolbar>
+            </AppBar>
             <Paper elevation={3} style={{ height: '400px', overflowY: 'auto', margin: '20px 0' }}>
-                <List>
+                <List >
                     {messages.map((msg, index) => (
                         <ListItem key={index} alignItems="flex-start">
                             <ListItemText
@@ -89,6 +105,11 @@ const ChatRoomPage = () => {
                     fullWidth
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            sendMessage();
+                        }
+                    }}
                     disabled={!isConnected}
                 />
                 <Button

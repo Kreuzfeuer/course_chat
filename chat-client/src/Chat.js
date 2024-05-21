@@ -1,11 +1,11 @@
-// src/Chat.js
 import React, { useState, useEffect } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { useNavigate } from 'react-router-dom';
 import {
-    Box, Button, Container, TextField, Typography, Select, MenuItem, Grid
+    Box, Button, Container, TextField, Typography, Select, MenuItem, Grid, Paper, FormControl, InputLabel, AppBar, Toolbar, IconButton
 } from '@mui/material';
+import { Chat as ChatIcon, Home as HomeIcon } from '@mui/icons-material';
 
 const Chat = () => {
     const [nickname, setNickname] = useState(localStorage.getItem('nickname') || '');
@@ -75,56 +75,77 @@ const Chat = () => {
 
     return (
         <Container maxWidth="md">
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Box>
-                    <TextField
-                        label="Enter your nickname"
-                        variant="outlined"
-                        value={nickname}
-                        onChange={(e) => setNickname(e.target.value)}
-                        margin="normal"
-                    />
+            <AppBar position="static" style={{ marginBottom: '20px' }}>
+                <Toolbar>
+                    <IconButton edge="start" color="inherit" aria-label="home" onClick={() => navigate('/')}>
+                        <HomeIcon />
+                    </IconButton>
+                    <Typography variant="h6" style={{ flexGrow: 1 }}>
+                        Chat Application
+                    </Typography>
+                    <IconButton color="inherit">
+                        <ChatIcon />
+                    </IconButton>
+                </Toolbar>
+            </AppBar>
+
+            <Paper elevation={3} style={{ padding: '20px' }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                     <Box>
-                        <Button variant="contained" color="primary" onClick={handleSetNickname} disabled={isNicknameSet}>
-                            Set Nickname
-                        </Button>
-                        <Button variant="contained" color="secondary" onClick={handleResetNickname} disabled={!isNicknameSet}>
-                            Change Nickname
-                        </Button>
+                        <TextField
+                            label="Enter your nickname"
+                            variant="outlined"
+                            value={nickname}
+                            onChange={(e) => setNickname(e.target.value)}
+                            margin="normal"
+                            fullWidth
+                            style={{ marginBottom: '10px' }}
+                        />
+                        <Box display="flex" justifyContent="space-between">
+                            <Button variant="contained" color="primary" onClick={handleSetNickname} disabled={isNicknameSet} style={{ marginRight: '10px' }}>
+                                Set Nickname
+                            </Button>
+                            <Button variant="contained" color="secondary" onClick={handleResetNickname} disabled={!isNicknameSet}>
+                                Change Nickname
+                            </Button>
+                        </Box>
                     </Box>
-                    
-                </Box>
-                <Box>
-                    <TextField
-                        id="create-new-room"
-                        label="Create new chat room"
-                        variant="outlined"
-                    />
                     <Box>
+                        <TextField
+                            id="create-new-room"
+                            label="Create new chat room"
+                            variant="outlined"
+                            fullWidth
+                            style={{ marginBottom: '10px' }}
+                        />
                         <Button variant="contained" color="primary" onClick={() => handleCreateChatRoom(document.getElementById('create-new-room').value)}>
                             Create Chat Room
                         </Button>
                     </Box>
-                    
                 </Box>
-            </Box>
-            <Grid container spacing={2}>
-                <Grid item xs={12}>
-                    <Box mb={2}>
-                        <Typography variant="h6">Chat Rooms</Typography>
-                        <Select
-                            value=""
-                            onChange={(e) => handleSelectChatRoom(e.target.value)}
-                            fullWidth
-                        >
-                            <MenuItem value="">Select Chat Room</MenuItem>
-                            {chatRooms.map((room, index) => (
-                                <MenuItem key={index} value={room}>{room}</MenuItem>
-                            ))}
-                        </Select>
-                    </Box>
+
+                <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                        <Box mb={2}>
+                            <Typography variant="h6">Chat Rooms</Typography>
+                            <FormControl variant="outlined" fullWidth>
+                                <InputLabel id="select-chat-room-label">Select Chat Room</InputLabel>
+                                <Select
+                                    labelId="select-chat-room-label"
+                                    value=""
+                                    onChange={(e) => handleSelectChatRoom(e.target.value)}
+                                    label="Select Chat Room"
+                                >
+                                    <MenuItem value="">Select Chat Room</MenuItem>
+                                    {chatRooms.map((room, index) => (
+                                        <MenuItem key={index} value={room}>{room}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Box>
+                    </Grid>
                 </Grid>
-            </Grid>
+            </Paper>
         </Container>
     );
 };
