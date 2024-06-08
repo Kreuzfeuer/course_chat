@@ -1,31 +1,28 @@
-# Используем официальный образ node:14 для сборки нашего приложения
-FROM node:22 as build-stage
+# Используем Node.js в качестве базового образа
+FROM node:22
 
-# Создаем директорию для нашего приложения внутри контейнера
+# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем наш package.json и package-lock.json в директорию приложения
+# Копируем package.json и package-lock.json
 COPY package*.json ./
 
 # Устанавливаем зависимости
 RUN npm install
 
-# Копируем наш код в директорию приложения
+# Копируем исходные файлы проекта
 COPY . .
 
 # Сборка приложения
 RUN npm run build
 
-# Используем nginx:stable-alpine для запуска нашего приложения
-FROM nginx:stable-alpine
+# Используем nginx:alpine в качестве базового образа для сервера
+FROM nginx:alpine
 
-# Копируем настройки nginx
-COPY --from=build-stage /app/nginx.conf /etc/nginx/conf.d/default.conf
+# Копируем сборку React в директорию по умолчанию nginx
+COPY --from=0 /app/build /usr/share/nginx/html
 
-# Копируем собранные файлы в директорию, откуда nginx будет их сервировать
-COPY --from=build-stage /app/build /usr/share/nginx/html
-
-# Экспортируем порт
+# Экспортируем порт 80
 EXPOSE 80
 
 # Запускаем nginx
