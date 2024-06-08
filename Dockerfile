@@ -1,5 +1,5 @@
 # Используем официальный образ openjdk:21
-FROM maven:3.8.6-jdk-21 as builder
+FROM 3.9.7-eclipse-temurin-21 as builder
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
