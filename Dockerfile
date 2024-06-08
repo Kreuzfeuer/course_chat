@@ -1,26 +1,32 @@
-# Используем официальный образ openjdk:21
-FROM maven:3.9.7-eclipse-temurin-21 as builder
+# Используем официальный образ node:14 для сборки нашего приложения
+FROM node:22 as build-stage
 
-# Устанавливаем рабочую директорию
+# Создаем директорию для нашего приложения внутри контейнера
 WORKDIR /app
 
-# Копируем файл pom.xml
-COPY pom.xml .
+# Копируем наш package.json и package-lock.json в директорию приложения
+COPY package*.json ./
 
-# Копируем остальные исходные файлы проекта
-COPY src ./src
+# Устанавливаем зависимости
+RUN npm install
 
-# Выполняем сборку проекта с помощью Maven
-RUN mvn clean package -DskipTests
+# Копируем наш код в директорию приложения
+COPY . .
 
-# Используем openjdk:21 для запуска приложения
-FROM openjdk:21
+# Сборка приложения
+RUN npm run build
 
-# Устанавливаем рабочую директорию
-WORKDIR /app
+# Используем nginx:stable-alpine для запуска нашего приложения
+FROM nginx:stable-alpine
 
-# Копируем собранный JAR-файл из предыдущего этапа
-COPY --from=builder /app/target/*.jar app.jar
+# Копируем настройки nginx
+COPY --from=build-stage /app/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Запускаем приложение
-ENTRYPOINT ["java","-jar","app.jar"]
+# Копируем собранные файлы в директорию, откуда nginx будет их сервировать
+COPY --from=build-stage /app/build /usr/share/nginx/html
+
+# Экспортируем порт
+EXPOSE 80
+
+# Запускаем nginx
+CMD ["nginx", "-g", "daemon off;"]
