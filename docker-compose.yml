@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  db:
+    image: library/h2
+    environment:
+      - H2_OPTIONS=-ifNotExists
+    ports:
+      - "8082:8082"
+    volumes:
+      - ./data:/data
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:h2:tcp://db:8082/mem:testdb
+      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_PASSWORD=
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.h2.Driver
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.H2Dialect
